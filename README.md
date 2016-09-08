@@ -1,28 +1,16 @@
 == README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## 初始化项目
 
-Things you may want to cover:
+    # 创建项目
+    $ rails new capstrano_demo -B -T
+    # 创建 migrate 内容
+    $ rails g migration post title content:text
 
-* Ruby version
+    # 添加 capistrano 相关 gem 到Gemfile
+    gem 'capistrano'
+    gem 'capistrano-rails'
+    gem 'capistrano-rvm'
 
-* System dependencies
+    $ bundle install
 
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
-
-
-Please feel free to use a different markup language if you do not plan to run
-<tt>rake doc:app</tt>.
