@@ -31,9 +31,9 @@ server '127.0.0.1:2222', user: 'web', roles: %w{app db web}
 # http://capistranorb.com/documentation/getting-started/configuration/
 # Feel free to add new variables to customise your setup.
 
-set :env, 'development'
 set :branch, 'master'
-set :unicorn_woker_num, 2
+set :env, 'production'
+set :unicorn_worker_num, 2
 
 
 # Custom SSH Options

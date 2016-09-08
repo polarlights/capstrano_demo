@@ -3,6 +3,9 @@ lock '3.4.0'
 
 set :application, 'capstrano_demo'
 set :repo_url, 'https://github.com/polarlights/capstrano_demo'
+set :pid_file, "#{deploy_to}/current/tmp/pids/unicorn.pid"
+set :unicorn_config_file, "#{current_path}/config/unicorn.rb"
+set :listen_port, 5000
 
 # Default branch is :master
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
@@ -38,14 +41,41 @@ set :rvm_type, :auto                     # Defaults to: :auto
 set :rvm_ruby_version, '2.3.1'      # Defaults to: 'default'
 
 namespace :deploy do
-
-  after :restart, :clear_cache do
-    on roles(:web), in: :groups, limit: 3, wait: 10 do
-      # Here we can do anything such as:
-      # within release_path do
-      #   execute :rake, 'cache:clear'
-      # end
+  task :start do
+    on roles(:app) do
+      execute %{source /etc/profile.d/rvm.sh && cd #{current_path} && if [ ! -f #{fetch(:pid_file)} ]; then UNICORN_WORKER_NUM=#{fetch(:unicorn_worker_num)} RAILS_ENV=#{fetch(:env)} APP_PORT=#{fetch(:listen_port)} bundle exec unicorn -c #{fetch(:unicorn_config_file)} -D; fi}
     end
   end
 
+  task :stop do
+    on roles(:app) do
+      execute %{source /etc/profile.d/rvm.sh && cd #{current_path} && if [ -f #{fetch(:pid_file)} ] && kill -0 `cat #{fetch(:pid_file)}`> /dev/null 2>&1; then kill -QUIT `cat #{fetch(:pid_file)}`; else rm #{fetch(:pid_file)} || exit 0; fi}
+    end
+  end
+
+  task :restart do
+    on roles(:app) do
+      execute %{source /etc/profile.d/rvm.sh && cd #{current_path} && if [ -f #{fetch(:pid_file)} ] && kill -0 `cat #{fetch(:pid_file)}`> /dev/null 2>&1; then kill -HUP `cat #{fetch(:pid_file)}`; else rm #{fetch(:pid_file)} || UNICORN_WORKER_NUM=#{fetch(:unicorn_worker_num)} RAILS_ENV=#{fetch(:env)} APP_PORT=#{fetch(:listen_port)} bundle exec unicorn -c #{fetch(:unicorn_config_file)} -D; fi}
+    end
+  end
+
+  task :localize_config do
+    on roles(:app) do
+      execute "cd #{current_path} && echo #{fetch(:apns_prefix)} > config/apns_prefix.txt"
+    end
+  end
+
+  desc "initialize the server folders"
+  task :setup do
+    on roles(:app) do
+      execute "mkdir -p #{deploy_to}/releases"
+      execute "mkdir -p #{deploy_to}/shared/log"
+      execute "mkdir -p #{deploy_to}/shared/tmp/pids"
+      execute "mkdir -p #{deploy_to}/shared/public"
+      execute "mkdir -p #{deploy_to}/shared/tmp"
+    end
+  end
+
+  after 'deploy:symlink:release', 'deploy:localize_config'
+  after :finishing, 'deploy:cleanup'
 end
