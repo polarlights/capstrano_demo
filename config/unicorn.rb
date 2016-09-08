@@ -1,4 +1,6 @@
 rails_env = ENV["RAILS_ENV"] || "production"
+WORKER_PROCESSES = (ENV['UNICORN_WORKER_NUM'] || 5).to_i
+puts "worker_processes: #{WORKER_PROCESSES}"
 
 preload_app true
 working_directory Rails.root
@@ -9,7 +11,7 @@ stdout_path "#{Rails.root}/log/unicorn.log"
 listen 5000, :tcp_nopush => false
 
 listen "/tmp/unicorn.capstrano_demo.sock"
-worker_processes 2
+worker_processes WORKER_PROCESSES
 timeout 120
 
 if GC.respond_to?(:copy_on_write_friendly=)
